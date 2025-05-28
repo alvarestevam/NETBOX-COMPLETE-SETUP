@@ -1,22 +1,40 @@
 services:
-  netbox: &netbox
-    image: docker.io/netboxcommunity/netbox:${VERSION-v4.3-3.3.0}
+  netbox: &netbox  # Serviço principal NetBox. "&netbox" define um alias reutilizável para outras seções (herança YAML).
+    image: docker.io/netboxcommunity/netbox:${VERSION-v4.3-3.3.0}  # Imagem oficial do NetBox, com versão configurável via variável de ambiente.
     depends_on:
-      - postgres
-      - redis
-      - redis-cache
-    env_file: env/netbox.env
-    user: "unit:root"
+      netbox-init:
+        condition: service_completed_successfully  # Só inicia após o netbox-init finalizar com sucesso.
+    env_file: env/netbox.env  # Arquivo local de variáveis de ambiente necessárias para o NetBox (ex: DB_HOST, REDIS_PASSWORD, etc).
+    user: "unit:root"  # Define o usuário que executa o processo dentro do container.
     healthcheck:
-      test: curl -f http://localhost:8080/login/ || exit 1
-      start_period: 90s
-      timeout: 3s
-      interval: 15s
+      test: curl -f http://localhost:8080/login/ || exit 1  # Verifica se a interface web de login está acessível.
+      start_period: 90s  # Aguarda 90s antes de iniciar o primeiro teste de saúde.
+      timeout: 3s  # Tempo máximo para cada tentativa.
+      interval: 15s  # Intervalo entre testes de saúde.
     volumes:
-      - ./configuration:/etc/netbox/config:z,ro
-      - netbox-media-files:/opt/netbox/netbox/media:rw
-      - netbox-reports-files:/opt/netbox/netbox/reports:rw
-      - netbox-scripts-files:/opt/netbox/netbox/scripts:rw
+      - ./configuration:/etc/netbox/config:z,ro  # Arquivo/diretório local com as configurações personalizadas do NetBox (obrigatório).
+      - netbox-media-files:/opt/netbox/netbox/media:rw  # Volume persistente para arquivos de mídia (uploads de usuários).
+      - netbox-reports-files:/opt/netbox/netbox/reports:rw  # Scripts personalizados de relatórios.
+      - netbox-scripts-files:/opt/netbox/netbox/scripts:rw  # Scripts personalizados para automações (ex: create_superuser).
+
+
+  netbox-init:
+    <<: *netbox  # Herda a configuração definida acima (imagem, env_file, volumes, etc).
+    depends_on:
+      postgres:
+        condition: service_healthy  # Só inicia quando o PostgreSQL estiver saudável.
+      redis:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+    volumes:
+      - ./scripts:/opt/netbox/scripts:ro  # Necessita de um diretório local ./scripts com o script create_superuser.py.
+    entrypoint: ""  # Limpa o entrypoint padrão da imagem para executar um comando customizado.
+    command: >  # Executa comandos sequenciais dentro do container:
+      sh -c "/opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py migrate &&
+             /opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py collectstatic --no-input &&
+             /opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py shell < /opt/netbox/scripts/create_superuser.py"
+
   netbox-worker:
     <<: *netbox
     depends_on:
@@ -25,75 +43,75 @@ services:
     command:
       - /opt/netbox/venv/bin/python
       - /opt/netbox/netbox/manage.py
-      - rqworker
+      - rqworker  # Worker responsável por processar tarefas em segundo plano via Redis Queue (RQ).
     healthcheck:
-      test: ps -aux | grep -v grep | grep -q rqworker || exit 1
+      test: ps -aux | grep -v grep | grep -q rqworker || exit 1  # Verifica se o processo rqworker está rodando.
       start_period: 20s
       timeout: 3s
       interval: 15s
+
   netbox-housekeeping:
     <<: *netbox
     depends_on:
       netbox:
         condition: service_healthy
     command:
-      - /opt/netbox/housekeeping.sh
+      - /opt/netbox/housekeeping.sh  # Script do NetBox que faz limpeza de tarefas antigas e manutenção periódica.
     healthcheck:
       test: ps -aux | grep -v grep | grep -q housekeeping || exit 1
       start_period: 20s
       timeout: 3s
       interval: 15s
 
-  # postgres
   postgres:
-    image: docker.io/postgres:17-alpine
+    image: docker.io/postgres:17-alpine  # Banco de dados relacional usado pelo NetBox.
     healthcheck:
-      test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER
+      test: pg_isready -q -t 2 -d $$POSTGRES_DB -U $$POSTGRES_USER  # Verifica se o Postgres está aceitando conexões.
       start_period: 20s
       timeout: 30s
       interval: 10s
       retries: 5
-    env_file: env/postgres.env
+    env_file: env/postgres.env  # Arquivo local com variáveis como POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB (obrigatório).
     volumes:
-      - netbox-postgres-data:/var/lib/postgresql/data
+      - netbox-postgres-data:/var/lib/postgresql/data  # Volume persistente com dados do banco.
 
-  # redis
   redis:
-    image: docker.io/valkey/valkey:8.1-alpine
+    image: docker.io/valkey/valkey:8.1-alpine  # Serviço Redis (Valkey é um fork).
     command:
       - sh
-      - -c # this is to evaluate the $REDIS_PASSWORD from the env
-      - valkey-server --appendonly yes --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+      - -c
+      - valkey-server --appendonly yes --requirepass $$REDIS_PASSWORD  # Exige senha e mantém persistência dos dados.
     healthcheck: &redis-healthcheck
-      test: '[ $$(valkey-cli --pass "$${REDIS_PASSWORD}" ping) = ''PONG'' ]'
+      test: '[ $$(valkey-cli --pass "$${REDIS_PASSWORD}" ping) = ''PONG'' ]'  # Verifica resposta do Redis.
       start_period: 5s
       timeout: 3s
       interval: 1s
       retries: 5
-    env_file: env/redis.env
+    env_file: env/redis.env  # Necessário: define REDIS_PASSWORD.
     volumes:
-      - netbox-redis-data:/data
+      - netbox-redis-data:/data  # Volume persistente com dados do Redis.
+
   redis-cache:
     image: docker.io/valkey/valkey:8.1-alpine
     command:
       - sh
-      - -c # this is to evaluate the $REDIS_PASSWORD from the env
-      - valkey-server --requirepass $$REDIS_PASSWORD ## $$ because of docker-compose
+      - -c
+      - valkey-server --requirepass $$REDIS_PASSWORD  # Redis somente para cache (sem appendonly).
     healthcheck: *redis-healthcheck
-    env_file: env/redis-cache.env
+    env_file: env/redis-cache.env  # Define REDIS_PASSWORD (pode ser diferente do Redis principal).
     volumes:
       - netbox-redis-cache-data:/data
 
 volumes:
   netbox-media-files:
-    driver: local
+    driver: local  # Armazena uploads enviados pela interface do NetBox.
   netbox-postgres-data:
-    driver: local
+    driver: local  # Dados persistentes do PostgreSQL.
   netbox-redis-cache-data:
-    driver: local
+    driver: local  # Cache do Redis (dados voláteis).
   netbox-redis-data:
-    driver: local
+    driver: local  # Dados do Redis principal (persistentes).
   netbox-reports-files:
-    driver: local
+    driver: local  # Relatórios customizados criados pelo usuário.
   netbox-scripts-files:
-    driver: local
+    driver: local  # Scripts adicionais para automações e execuções personalizadas.
