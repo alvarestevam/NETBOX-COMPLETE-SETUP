@@ -119,3 +119,4 @@ LABEL netbox.original-tag="" \
       org.opencontainers.image.source="https://github.com/netbox-community/netbox-docker.git" \
       org.opencontainers.image.revision="" \
       org.opencontainers.image.version=""
+
