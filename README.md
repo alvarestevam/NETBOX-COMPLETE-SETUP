@@ -16,8 +16,8 @@ Como usar:
 
 1- Clone o repositório
 
-git clone https://github.com/alvarestevam/netbox-complete-setup.git
-cd netbox-complete-setup
+"git clone https://github.com/alvarestevam/netbox-complete-setup.git" e em seguida
+"cd netbox-complete-setup"
 
 2- Configure as variáveis de ambiente
 
