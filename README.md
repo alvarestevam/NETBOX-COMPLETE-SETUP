@@ -16,18 +16,13 @@ Fornecer um ambiente NetBox funcional com configurações automáticas que resol
 📂 Estrutura do Repositório
 
 netbox-complete-setup/
-│
 ├── Dockerfile
-│
-├── docker-compose.yml   
-│         
+├── docker-compose.yml           
 ├── docker-compose.override.yml   
-│
 ├── env/
 │   ├── netbox.env                
 │   ├── postgres.env              
-│   └── redis.env     
-│            
+│   └── redis.env               
 ├── configuration/               
 │   ├── configuration.py
 │   ├── extra.py
@@ -35,11 +30,9 @@ netbox-complete-setup/
 │   ├── plugins.py
 │   └── ldap/
 │        ├── extra.py
-│        └── ldap_config.p
-│ 
+│        └── ldap_config.py
 ├── scripts/
 │   └── create_superuser.py   
-│
 ├── docker/
 │   ├── configuration.docker.py
 │   ├── docker-entrypoint.sh
@@ -48,7 +41,6 @@ netbox-complete-setup/
 │   ├── unit.list
 │   ├── lauch-netbox.sh
 │   └── ldap_config.docker.py
-│ 
 └── README.md
 
 Como usar:
@@ -62,8 +54,8 @@ cd netbox-complete-setup
 
 Edite os arquivos dentro de env/ para ajustar os valores como usuário, senha e banco:
 
-DJANGO_SUPERUSER_USERNAME=admin        <----- edite aqui
-DJANGO_SUPERUSER_PASSWORD=admin        <----- edite aqui
+DJANGO_SUPERUSER_USERNAME=admin                <----- edite aqui
+DJANGO_SUPERUSER_PASSWORD=admin                <----- edite aqui
 DJANGO_SUPERUSER_EMAIL=admin@example.com
 
 3- Para personalizar o superusuário criado automaticamente, edite o arquivo scripts/create_superuser.py:
@@ -71,8 +63,8 @@ DJANGO_SUPERUSER_EMAIL=admin@example.com
 import os
 from django.contrib.auth import get_user_model
 
-username = os.getenv("DJANGO_SUPERUSER_USERNAME", "admin")        <----- edite aqui
-password = os.getenv("DJANGO_SUPERUSER_PASSWORD", "admin")        <----- edite aqui
+username = os.getenv("DJANGO_SUPERUSER_USERNAME", "admin")                <----- edite aqui
+password = os.getenv("DJANGO_SUPERUSER_PASSWORD", "admin")                <----- edite aqui
 email = os.getenv("DJANGO_SUPERUSER_EMAIL", "admin@example.com")
 
 User = get_user_model()
