@@ -25,12 +25,14 @@ Edite os arquivos dentro de env/ para ajustar os valores como usuário, senha e 
 
 Exemplo
 Modificar usuario padrão:
-Dentro do env/netbox.env terá duas variaveis que são DJANGO_SUPERUSER_USERNAME=admin e DJANGO_SUPERUSER_PASSWORD=admin, Apenas modifique as informções para seu usuario nos campos "admin".
+Dentro do env/netbox.env terá duas variaveis que são "DJANGO_SUPERUSER_USERNAME=admin" e "DJANGO_SUPERUSER_PASSWORD=admin", Apenas modifique as informções para seu usuario nos campos "admin".
 
 3- Para personalizar o superusuário criado automaticamente, edite o arquivo scripts/create_superuser.py:
 
 Seguintes linhas que precisam ser modificadas:
-username = os.getenv("DJANGO_SUPERUSER_USERNAME", "admin")  <----- edite aqui / password = os.getenv("DJANGO_SUPERUSER_PASSWORD", "admin")  <----- edite aqui
+"username = os.getenv("DJANGO_SUPERUSER_USERNAME", "admin")"  <----- edite aqui / "password = os.getenv("DJANGO_SUPERUSER_PASSWORD", "admin")"  <----- edite aqui
+
+Necessario apenas substituir os campos "admin" por seu usuario e senha.
 
 4- Execute com Docker Compose
 
