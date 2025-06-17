@@ -12,37 +12,6 @@ Fornecer um ambiente NetBox funcional com configurações automáticas que resol
 
 - Comportamento não determinístico na primeira execução do Docker Compose.
 
-
-📂 Estrutura do Repositório
-
-netbox-complete-setup/
-├── Dockerfile
-├── docker-compose.yml           
-├── docker-compose.override.yml   
-├── env/
-│   ├── netbox.env                
-│   ├── postgres.env              
-│   └── redis.env               
-├── configuration/               
-│   ├── configuration.py
-│   ├── extra.py
-│   ├── logging.py
-│   ├── plugins.py
-│   └── ldap/
-│        ├── extra.py
-│        └── ldap_config.py
-├── scripts/
-│   └── create_superuser.py   
-├── docker/
-│   ├── configuration.docker.py
-│   ├── docker-entrypoint.sh
-│   ├── housekeeping.sh
-│   ├── nginx-unit.json
-│   ├── unit.list
-│   ├── lauch-netbox.sh
-│   └── ldap_config.docker.py
-└── README.md
-
 Como usar:
 
 1- Clone o repositório
@@ -54,8 +23,8 @@ cd netbox-complete-setup
 
 Edite os arquivos dentro de env/ para ajustar os valores como usuário, senha e banco:
 
-DJANGO_SUPERUSER_USERNAME=admin                <----- edite aqui
-DJANGO_SUPERUSER_PASSWORD=admin                <----- edite aqui
+DJANGO_SUPERUSER_USERNAME=admin<----- edite aqui
+DJANGO_SUPERUSER_PASSWORD=admin<----- edite aqui
 DJANGO_SUPERUSER_EMAIL=admin@example.com
 
 3- Para personalizar o superusuário criado automaticamente, edite o arquivo scripts/create_superuser.py:
