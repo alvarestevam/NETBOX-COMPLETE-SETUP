@@ -42,8 +42,13 @@ docker compose up -d
 
 No navegador: http://localhost:8000 ou http://<IP DO HOST>:8000
 
-
 Esse projeto é uma contribuição para a comunidade com base em experiências reais. Pull requests e feedbacks são bem-vindos!
+
+AVISO IMPORTANTE:
+Por boas praticas recomendo que modifique no /env as senhas internas dos seguintes serviços:
+POSTGRES
+REDIS
+REDIS-CACHE
 
 Autor:
 
